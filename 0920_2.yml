@@ -1,0 +1,25 @@
+---
+- name: Using IBM Storage Virtualize collection
+  hosts: localhost
+  tasks:
+    - name: Gather info from Storage
+      ibm.storage_virtualize.ibm_svc_info:
+        clustername: 172.23.76.135
+        username: superuser
+        password: "passw0rd"
+      register: current_version
+
+    - name: Do svcTask
+      ibm.storage_virtualize.ibm_svcinfo_command:
+        command: "svcinfo lssystem"
+        clustername: "172.23.76.135"
+        username: "superuser"
+        password: "passw0rd"
+      register: storage_info
+
+    - name: Extract current_version
+      set_fact:
+        code_level: "{{storage_info.stdout | from_json | json_query('code_level')}}"
+    - name: Display info
+      debug:
+        var: code_level

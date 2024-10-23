@@ -1,0 +1,38 @@
+---
+- name: Using IBM Storage Virtualize collection
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Do svcTask
+      ibm.storage_virtualize.ibm_svcinfo_command:
+        command: "svcinfo lssystem"
+        clustername: "172.23.76.132"
+        username: "superuser"
+        password: "passw0rd"
+      register: storage_info
+    - name: Extract current_version
+      set_fact:
+        code_level: "{{storage_info.stdout | regex_search('\"code_level\"\\s*:\\s*\"([^\"]+)\"', '\\1') }}"
+    - name: Display info
+      debug:
+        var: code_level
+    - name: Install Utility
+      ibm.storage_virtualize.ibm_svctask_command:
+        command: "svctask applysoftware -file IBM_INSTALL_FROM_8.5_AND_LATER_upgradetest_45.0"
+        clustername: "172.23.76.132"
+        username: "superuser"
+        password: "passw0rd"
+      register: install_u_result
+      failed_when: install_u_result.rc not in [0, 1]
+
+    - name: Display insstall install_u_result
+      debug:
+        var: install_u_result
+    - name: FirmwareUpgrade
+      command: "ssh -i /home/superuser/.ssh/id_rsa superuser@172.23.76.132 svcupgradetest -v 8.6.0.5"
+
+    - name: FirmwareUpgrade
+      ibm.storage_virtualize.ibm_svctask_command:
+        command: "svctask applysoftware -file IBM_FlashSystem7x00_and_StorwizeV7000_INSTALL_8.6.0.4"
+      register: upgrade_result
+      changed_when: "'success' in upgrade_result.stdout"  # 根據命令的輸出判斷是否改變

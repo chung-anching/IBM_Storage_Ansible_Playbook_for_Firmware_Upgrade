@@ -1,0 +1,10 @@
+﻿---
+- name: Using IBM Storage Virtualize collection
+  hosts: localhost
+  tasks:
+    - name: Upgrade
+      ibm.storage_virtualize.ibm_svctask_command:
+        command: "svctask applysoftware -file IBM_FlashSystem7x00_and_StorwizeV7000_INSTALL_8.6.0.4"
+        clustername: "172.23.76.132"
+        username: "superuser"
+        password: "passw0rd"

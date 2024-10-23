@@ -1,0 +1,10 @@
+---
+- name: Using IBM Storage Virtualize collection
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Copy directory to remote sites
+      copy:
+        src: /worktmp/fs7300fw/IBM_INSTALL_FROM_8.5_AND_LATER_upgradetest_45.0
+        dest: superuser@172.23.76.135:/upgrade
+        mode: '0644'  # 根據需要調整檔案權限

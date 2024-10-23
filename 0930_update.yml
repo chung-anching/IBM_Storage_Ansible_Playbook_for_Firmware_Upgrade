@@ -1,0 +1,53 @@
+---
+- name: Using IBM Storage Virtualize collection
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Do svcTask
+      ibm.storage_virtualize.ibm_svcinfo_command:
+        command: "svcinfo lssystem"
+        clustername: "172.23.76.135"
+        username: "superuser"
+        password: "passw0rd"
+      register: storage_info
+
+    - name: Check status success
+      ibm.storage_virtualize.ibm_svcinfo_command:
+        command: "svcinfo lsupdate"
+        clustername: "172.23.76.135"
+        username: "superuser"
+        password: "passw0rd"
+      register: lsupdate_result
+
+    - name: Check if 'status success' is in lsupdate lsupdate_result
+      set_fact:
+        is_success: "{{ lsupdate_result.stdout is search('\"status\": \"success\"') }}"
+
+    - name: Wait until status is success
+      block:
+        - name: Run lsupdate command again
+          ibm.storage_virtualize.ibm_svcinfo_command:
+            command: "svcinfo lsupdate"
+            clustername: "172.23.76.135"
+            username: "superuser"
+            password: "passw0rd"
+          register: lsupdate_result
+          until: is_success
+          retries: 60
+          delay: 120
+        - name: Check again
+          set_fact:
+            is_success: "{{ lsupdate_result.stdout is search('\"status\": \"success\"') }}"
+
+    - name: Stop if not success
+      fail:
+        msg: "Not success"
+      when: not is_success  # 使用 not 來反轉布林值
+
+    - name: Extract current_version
+      set_fact:
+        code_level: "{{storage_info.stdout | regex_search('\"code_level\"\\s*:\\s*\"([^\"]+)\"', '\\1') }}"
+
+    - name: Display info
+      debug:
+        var: code_level
